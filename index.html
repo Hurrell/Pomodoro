@@ -14,6 +14,22 @@
         <span class="slider round"></span>
     </label>
     <p>FlipFlop</p>
+
+    <label class="switch">
+        <input id="toggleAudio" type="checkbox" checked>
+        <span class="slider round"></span>
+    </label>
+    <p>ToggleAudio</p>
+
+    <div class="playpause">
+        <input type="checkbox" value="None" id="playpause" name="check" />
+        <label id="playpauselabel" for="playpause" tabindex=1></label>
+    </div>
+
+    <audio id="audio">  
+        <source src="http://bestclassicaltunes.com/MP3Records/Grieg/GriegMorningMood.mp3" type="audio/mpeg">
+    </audio>
+
 </div>
 
 <div id="timer">25:00</div>
@@ -129,6 +145,7 @@
         resetClock(writeTime);
         console.log('writin');
         updateHistoryArray(currentStatus);
+        audioAlert();
     }
 
     function startBreak() {
@@ -149,6 +166,7 @@
         breakTime = Number(document.querySelector('#break-time').value);
         resetClock(breakTime);
         updateHistoryArray(currentStatus);
+        audioAlert();
     }
 
     function resetClock(additionalMinutes) {
@@ -232,6 +250,36 @@
         timer.textContent = timeRemaining;
     }
 
+    function playAudio () {
+        let audio = document.querySelector("#audio");
+        audio.play();
+    }
+    function pauseAudio () {
+        let audio = document.querySelector("#audio");
+        audio.pause();
+    }
+
+    function audioPlayButton () {
+        if (playPauseButton.checked) {
+            playAudio();
+        } else {
+            pauseAudio ();
+        }
+    }
+
+    function audioAlert () {
+        let toggle = document.querySelector("#toggleAudio");
+        if (toggle.checked) {
+            let audio = document.querySelector("#audio");
+            audio.currentTime = 0
+            audio.play();
+            playPauseButton.checked = true;
+        }
+    }
+
+    let playPauseButton = document.querySelector("#playpause");
+
+    playPauseButton.addEventListener('click', audioPlayButton);
     // function toggleFlipFlop () {
     //     if (flipflopSwitch.checked == true) {
 
