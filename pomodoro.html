@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Pomodoro for writing</title>
+    <link rel="stylesheet" href="pomodoro.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="options">
+    <label class="switch">
+        <input id="flipflop" type="checkbox" checked>
+        <span class="slider round"></span>
+    </label>
+    <p>FlipFlop</p>
+</div>
+
+<div id="timer">25:00</div>
+
+<div id="buttons">
+    <div></div>
+    <button class="buttons right-align" id="write">Write</button>
+    <button class="buttons left-align" id="break">Relax</button>
+    <div></div>
+</div>
+
+<div id="time-settings">
+    <div></div>
+    <div class="right-align">
+        <input maxlength="2" value="25" onkeypress="return isNumberKey(event);" id="write-time">
+    </div>
+    <div class="left-align">
+        <input maxlength="2" value="5" onkeypress="return isNumberKey(event);" id="break-time">
+    </div>
+    <div></div>
+    <div></div>
+    <div>mins</div>
+    <div>mins</div>
+    <div></div>
+</div>
+
+<div id="history-container">
+    <div></div>
+    <div id ="history">
+        History
+        <div id="history-titles">
+            <div>Activity</div>
+            <div>Length</div>
+            <div>Time Finished</div>
+        </div>
+        <div id="history-data">
+
+        </div>
+
+    </div>
+    <div></div>
+</div>
+<script>
+
+
+
+    let additionalMinutes = 10;
+    let currentDate = new Date();
+    let minutes = currentDate.getMinutes() + additionalMinutes;
+    let endClockDate = new Date();
+    endClockDate.setMinutes(minutes);
+    let countdown =  (endClockDate.getTime() - currentDate.getTime());
+    let countdownSeconds = Math.floor(countdown/1000) % 60;
+    let countdownMinutes = Math.floor(countdown/60000) % 60;
+    console.log(additionalMinutes);
+    console.log(currentDate);
+    console.log(minutes);
+    console.log(endClockDate);
+    console.log(countdown);
+    console.log(countdownMinutes);
+    console.log(countdownSeconds);
+
+    let refresher;
+    let writeButton = document.querySelector('#write');
+    writeButton.addEventListener('click',startWriting)
+    let breakButton = document.querySelector('#break');
+    breakButton.addEventListener('click', startBreak);
+    let currentStatus;
+    let lastStatus;
+    let breakTime;
+    let writeTime;
+    let historyArray =[];
+
+    function updateHistoryArray (currentStatus) {
+        if (historyArray.length) {
+            if (currentStatus === historyArray[historyArray.length-1].activity) {
+                return;
+            }
+        } 
+        let historyObject = {
+            activity: currentStatus,
+            startTime: new Date(),
+        };
+        historyArray.push(historyObject)
+
+        if (historyArray.length > 1) {
+            let penultimateLog = historyArray[historyArray.length-2]
+            let lastLog = historyArray[historyArray.length-1];
+            let runTime = lastLog.startTime - penultimateLog.startTime;
+            let elapsedMinutes = Math.floor((runTime / (60 * 1000))) % 60;
+            let elapsedSeconds = Math.floor((runTime / 1000)) % 60;
+            let elapsedTime = "" + elapsedMinutes + ":" + elapsedSeconds;
+            writeToHistory(
+                penultimateLog.activity, elapsedTime)
+        }
+        }
+
+    function startWriting () {
+        // if (currentStatus === "Relaxing") {
+        //     let elapsedMinutes = breakTime - countdownMinutes - 1;
+        //     let elapsedSeconds = 60 - countdownSeconds;
+        //     let elapsedTime = "" + elapsedMinutes + ":" + elapsedSeconds;
+        //     writeToHistory(currentStatus, elapsedTime);
+        // } else if (currentStatus === "Writing") {
+        //     let elapsedMinutes = writeTime - countdownMinutes - 1;
+        //     let elapsedSeconds = 60 - countdownSeconds;
+        //     let elapsedTime = "" + elapsedMinutes + ":" + elapsedSeconds;
+        //     writeToHistory(currentStatus, elapsedTime);
+        // }
+        currentStatus = "Writing";
+        clearInterval(refresher);
+        writeTime = Number(document.querySelector('#write-time').value);
+        resetClock(writeTime);
+        console.log('writin');
+        updateHistoryArray(currentStatus);
+    }
+
+    function startBreak() {
+        // if (currentStatus = "Writing") {
+        //     let elapsedMinutes = writeTime - countdownMinutes - 1;
+        //     let elapsedSeconds = 60 - countdownSeconds;
+        //     let elapsedTime = "" + elapsedMinutes + ":" + elapsedSeconds;
+        //     writeToHistory(currentStatus, elapsedTime);
+        // } else if (currentStatus = "Relaxing") {
+        //     let elapsedMinutes = breakTime - countdownMinutes - 1;
+        //     let elapsedSeconds = 60 - countdownSeconds;
+        //     let elapsedTime = "" + elapsedMinutes + ":" + elapsedSeconds;
+        //     writeToHistory(currentStatus, elapsedTime);
+        // }
+        currentStatus = "Relaxing";
+        clearInterval(refresher);
+        console.log('breakin');
+        breakTime = Number(document.querySelector('#break-time').value);
+        resetClock(breakTime);
+        updateHistoryArray(currentStatus);
+    }
+
+    function resetClock(additionalMinutes) {
+        console.log(additionalMinutes);
+        clearInterval(refresher);
+        currentDate = new Date();
+        minutes = currentDate.getMinutes() + additionalMinutes;
+        endClockDate = new Date();
+        endClockDate.setMinutes(minutes);
+        refresher = setInterval(updateClock,1000);
+    }
+
+    function updateClock () {
+        let countdownDisplay = document.querySelector('#timer');
+        currentDate = new Date();
+        countdown =  (endClockDate.getTime() - currentDate.getTime());
+        countdownSeconds = Math.abs(Math.floor(countdown/1000) % 60);
+        countdownMinutes = Math.floor(countdown/60000) % 60;
+
+        /*FlipFlop or Not */
+
+        if ((Math.floor(countdown/1000) % 60) <= 0 && countdownMinutes <= 0) {
+            if (document.querySelector("#flipflop").checked === true) {
+                switch (currentStatus) {
+                    case "Relaxing":
+                        startWriting();
+                        break;
+                    case "Writing":
+                        startBreak();
+                        break;
+                }
+            }
+        }
+
+        /*format clock */
+        if (countdownSeconds<10 && countdownSeconds>=0) {
+            countdownSeconds = "0" + countdownSeconds;
+        }
+
+        let timeRemaining = "";
+        if (countdownMinutes<0) {
+            timeRemaining += '-' + (Math.abs(countdownMinutes)-1) + ':' + countdownSeconds;
+        } else {
+            timeRemaining += countdownMinutes + ':' + countdownSeconds;
+        }
+        
+        countdownDisplay.textContent = timeRemaining;
+    }
+
+    function writeToHistory(type, elapsedTime) {
+        
+        historySection.style.display = "block";
+
+        let history = document.querySelector("#history-data");
+        console.log(history);
+        console.log(history.target);
+        let historyTypeDiv = document.createElement('div');
+        historyTypeDiv.textContent = `${type}`;
+        history.appendChild(historyTypeDiv);
+
+        let historyLengthDiv = document.createElement('div');
+        historyLengthDiv.textContent = `${elapsedTime}`;
+        history.appendChild(historyLengthDiv);
+        
+        let historyTimeDiv = document.createElement('div');
+        historyTimeDiv.textContent = `${(new Date()).toTimeString().split(' ')[0]}`;
+        history.appendChild(historyTimeDiv);
+    }
+
+    function isNumberKey(evt){
+        let charCode = (evt.which) ? evt.which : evt.keyCode
+        return !(charCode > 31 && (charCode < 48 || charCode > 57));
+    }
+
+    function matchClockOnLoad () {
+        let writeTime = document.querySelector('#write-time');
+        let timer = document.querySelector('#timer');
+        let countdownMinutes = writeTime.value;
+        let timeRemaining = "";
+        timeRemaining += countdownMinutes + ':' + '00';
+        timer.textContent = timeRemaining;
+    }
+
+    // function toggleFlipFlop () {
+    //     if (flipflopSwitch.checked == true) {
+
+    //     }
+    // }
+
+    // flipflopSwitch = document.querySelector("#flipflop");
+
+    // flipflopSwitch.addEventListener('click',toggleFlipFlop);
+
+    let historySection = document.querySelector('#history');
+    historySection.style.display = "none";
+    matchClockOnLoad();
+
+    // On 'write', start countdown from number specified by write for
+    // let timeLeft = 20
+    // writeButton = document.querySelector('#write');
+    // writeButton.addEventListener('click',resetCounter);
+    //     countdown(20);
+    // function resetCounter (countFrom) {
+
+    // }
+    // timeLeft = 20
+    // function countdown (timeLeft) {
+    //     counter = setInterval(function(){
+    //         timeLeft--;
+    //         document.getElementById("timer").textContent = timeLeft;
+    //         if(timeLeft <= 0)
+    //             clearInterval(counter);
+    //         },1000);
+        
+    // }
+    
+    
+    // on break, reset countdown to break for and start 
+
+    // Set the date we're counting down to
+// let countDownDate = new Date("Jan 5, 2021 15:37:25").getTime();
+
+// // Update the count down every 1 second
+// var x = setInterval(function() {
+
+//   // Get today's date and time
+//   var now = new Date().getTime();
+
+//   // Find the distance between now and the count down date
+//   var distance = countDownDate - now;
+
+//   // Time calculations for days, hours, minutes and seconds
+//   var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+//   var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+//   var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+//   var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+//   // Display the result in the element with id="demo"
+//   document.getElementById("demo").innerHTML = days + "d " + hours + "h "
+//   + minutes + "m " + seconds + "s ";
+
+//   // If the count down is finished, write some text
+//   if (distance < 0) {
+//     clearInterval(x);
+//     document.getElementById("demo").innerHTML = "EXPIRED";
+//   }
+// }, 1000);
+</script>
+</body>
+</html>
